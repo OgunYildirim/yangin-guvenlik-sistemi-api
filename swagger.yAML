@@ -1,0 +1,149 @@
+openapi: 3.0.3
+info:
+  title: Yangın Güvenlik Sistemi API
+  version: 1.0.0
+  description: |
+    Yangın algılama, alarm ve sprinkler kontrolü sağlayan REST API.
+    Bu servis sensörlerden gelen yangın uyarılarını işler, alarm ve sprinkler sistemlerini devreye alır.
+
+servers:
+  - url: http://localhost:5000
+    description: Yerel geliştirme sunucusu
+
+paths:
+  /api/yangin_uyarisi:
+    post:
+      summary: Yangın uyarısı gönder
+      description: Sensör, kontrol paneline yangın uyarısı gönderir ve sistem yangın protokolünü başlatır.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kaynak:
+                  type: string
+                  example: Sensör B - Ofis Katı 3
+      responses:
+        '200':
+          description: Yangın protokolü başarıyla başlatıldı.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/YanginUyarisiResponse'
+        '500':
+          description: Sistem hatası oluştu.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HataResponse'
+
+  /api/sifirla:
+    post:
+      summary: Sistemi sıfırla
+      description: Tüm sistemleri manuel olarak sıfırlar ve "Hazır" durumuna getirir.
+      responses:
+        '200':
+          description: Sistem başarıyla sıfırlandı.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mesaj:
+                    type: string
+                    example: Tüm yangın sistemleri sıfırlandı ve 'Hazır' durumuna getirildi.
+        '500':
+          description: Sistem sıfırlanırken hata oluştu.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HataResponse'
+
+  /api/durum:
+    get:
+      summary: Sistem durumunu getir
+      description: Alarm ve sprinkler sistemlerinin mevcut durumunu döner.
+      responses:
+        '200':
+          description: Sistem durumu sorgulandı.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DurumResponse'
+        '500':
+          description: Durum alınırken hata oluştu.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HataResponse'
+
+components:
+  schemas:
+    YanginUyarisiResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: OK
+        protokol_baslatildi:
+          type: boolean
+          example: true
+        kaynak_sensör:
+          type: string
+          example: Sensör B - Ofis Katı 3
+        protokol_akisi:
+          type: object
+          properties:
+            alarm:
+              type: object
+              description: Alarm sistemi çalıştırma sonucu.
+              properties:
+                mesaj:
+                  type: string
+                  example: Alarm başarıyla çalıştırıldı
+                durum:
+                  type: string
+                  example: Calisiyor
+            sprinkler_komut:
+              type: object
+              description: Sprinkler sistemine gönderme komutu sonucu.
+              properties:
+                mesaj:
+                  type: string
+                  example: Su akışı başladı
+                durum:
+                  type: string
+                  example: Calisiyor
+            kontrol_paneli_durumu:
+              type: string
+              
+
+    DurumResponse:
+      type: object
+      properties:
+        AlarmSistemi:
+          type: object
+          properties:
+            durum:
+              type: string
+              example: Hazır
+              description: Alarm sisteminin mevcut durumu (Hazır/Calisiyor)
+        SprinklerSistemi:
+          type: object
+          properties:
+            durum:
+              type: string
+              example: Calisiyor
+              description: Sprinkler sisteminin mevcut durumu (Hazır/Calisiyor)
+
+    HataResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: Hata
+        mesaj:
+          type: string
+          example: Protokol sırasında beklenmedik bir hata oluştu.
