@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  fire-safety-app:
+    # Dockerfile'ı kullanarak imajı oluştur
+    build: .
+    # Kapsayıcı adını belirle
+    container_name: fire_safety_protocol
+    # Uygulama portunu dışarıya aç (host:container)
+    ports:
+      - "5000:5000"
+    # Restart politikası (kapsayıcı beklenmedik bir şekilde durursa yeniden başlat)
+    restart: always
