@@ -17,7 +17,6 @@ class AlarmSistemi:
         
         self.durum = "Calisiyor"
         print("🚨 Alarm Sistemi: Yüksek sesli alarm çalıyor!")
-        # Gerçek bir sistemde bu bir donanım komutu olurdu.
         return {"mesaj": "Alarm başarıyla çalıştırıldı", "durum": self.durum}, 200
 
     def sifirla(self):
@@ -37,9 +36,8 @@ class SprinklerSistemi:
         
         self.durum = "Calisiyor"
         print("💧 Sprinkler Sistemi: Vana açılıyor...")
-        time.sleep(1) # Su akışının başlamasını simüle et
+        time.sleep(1)
         
-        # 4. Adım: Sprinkler sistemi çalıştığını bildirir
         geri_bildirim = {"mesaj": "Su akışı başladı", "durum": self.durum}
         print(f"💧 Sprinkler Sistemi -> Kontrol Paneli: {geri_bildirim['mesaj']}")
         
@@ -59,24 +57,23 @@ sprinkler_sistemi = SprinklerSistemi()
 def yangin_protokolu_baslat(yangin_kaynagi="Sensör A"):
     """
     Kontrol Paneli'nin temel iş mantığını çalıştırır.
-    sequenceDiagram'daki 2., 3. ve 4. adımları içerir.
     """
     sonuclar = {}
     
     print(f"\n🔥 Kontrol Paneli: {yangin_kaynagi}'dan 'Yangın Var' uyarısı alındı.")
     
-    # 2. Adım: Kontrol paneli alarmı etkinleştirir
+    # 2. Alarmı başlat
     alarm_sonucu, alarm_status = alarm_sistemi.calistir()
     sonuclar['alarm'] = alarm_sonucu
     
-    # 3. Adım: Kontrol paneli sprinkler sistemini başlatır
+    # 3. Sprinkler sistemi başlasın
     sprinkler_komut = sprinkler_sistemi.su_puskurtmeye_basla()
     sonuclar['sprinkler_komut'] = sprinkler_komut[0]
     
-    # 4. Adım: Sprinkler sistemi çalıştığını bildirir (Geri bildirim zaten fonksiyon içinde yapıldı)
+    # 4. Sprinkler geri bildirim
     sonuclar['sprinkler_geri_bildirim'] = sprinkler_komut[0]
     
-    # 5. Adım: Kontrol paneli sensöre/izleme sistemine durumu bildirir
+    # 5. Genel durum
     durum_mesaji = "İşlem tamamlandı: Alarm ve Sprinkler devreye alındı."
     sonuclar['kontrol_paneli_durumu'] = durum_mesaji
     print(f"✅ Kontrol Paneli -> {yangin_kaynagi}: {durum_mesaji}")
@@ -87,14 +84,10 @@ def yangin_protokolu_baslat(yangin_kaynagi="Sensör A"):
 
 @app.route('/api/yangin_uyarisi', methods=['POST'])
 def yangin_uyarisi_al():
-    """
-    Sensörün (Aktör) Kontrol Paneline yangın uyarısı gönderdiği uç noktadır.
-    sequenceDiagram'daki 1. Adımı temsil eder.
-    """
+    """Sensörün kontrol paneline yangın uyarısı gönderdiği uç nokta."""
     data = request.get_json(silent=True)
     kaynak = data.get('kaynak', 'Bilinmeyen Sensör') if data else 'Bilinmeyen Sensör'
     
-    # Yangın protokülünü başlat
     try:
         protokol_sonuclari = yangin_protokolu_baslat(kaynak)
         return jsonify({
@@ -108,26 +101,30 @@ def yangin_uyarisi_al():
 
 @app.route('/api/sifirla', methods=['POST'])
 def sistemi_sifirla():
-    """
-    Sistemi manuel olarak sıfırlamak için uç nokta.
-    """
+    """Sistemi manuel olarak sıfırlar."""
     alarm_sistemi.sifirla()
     sprinkler_sistemi.durdur_ve_sifirla()
     return jsonify({"mesaj": "Tüm yangın sistemleri sıfırlandı ve 'Hazır' durumuna getirildi."}), 200
 
 @app.route('/api/durum', methods=['GET'])
 def durumu_al():
-    """
-    Sistem bileşenlerinin mevcut durumunu gösterir.
-    """
+    """Sistem bileşenlerinin mevcut durumunu gösterir."""
     return jsonify({
         "AlarmSistemi": {"durum": alarm_sistemi.durum},
         "SprinklerSistemi": {"durum": sprinkler_sistemi.durum}
     }), 200
 
+# --- YENİ EKLENEN ENDPOINT (ÖDEV İÇİN) ---
+@app.route('/api/ping', methods=['GET'])
+def ping():
+    """Servisin ayakta olup olmadığını kontrol eder."""
+    return jsonify({
+        "status": "running",
+        "message": "Yangın Güvenlik Sistemi API çalışıyor."
+    }), 200
+
 # Uygulamayı başlatma
 if __name__ == '__main__':
-    # Flask uygulamasını çalıştırmadan önce terminale bilgi ver
     print("--------------------------------------------------")
     print("🔥 Yangın Güvenlik Protokolü (Flask REST Servisi)")
     print("--------------------------------------------------")
@@ -135,7 +132,7 @@ if __name__ == '__main__':
     print("* POST /api/yangin_uyarisi: Protokolü başlatır.")
     print("* POST /api/sifirla: Sistemi sıfırlar.")
     print("* GET /api/durum: Sistemlerin durumunu sorgular.")
+    print("* GET /api/ping: Health check endpointi.")
     print("--------------------------------------------------")
     
-    # Uygulamayı debug modda çalıştır (Geliştirme için)
     app.run(debug=True, port=5000)
