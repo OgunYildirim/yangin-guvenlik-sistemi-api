@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # Backend Service (Flask API)
+  backend:
+    build: .
+    container_name: fire_safety_backend
+    ports:
+      - "5000:5000"
+    restart: always
+    networks:
+      - fire-safety-network
+    environment:
+      - FLASK_ENV=production
+
+  # Frontend Service (Nginx)
+  frontend:
+    build: ./frontend
+    container_name: fire_safety_frontend
+    ports:
+      - "3000:80"
+    restart: always
+    networks:
+      - fire-safety-network
+    depends_on:
+      - backend
+
+networks:
+  fire-safety-network:
+    driver: bridge
