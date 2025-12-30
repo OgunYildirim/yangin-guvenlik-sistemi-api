@@ -1,19 +1,40 @@
 version: '3.8'
 
 services:
-  # Backend Service (Flask API)
+  # 1. Veritabanı Servisi (PostgreSQL)
+  db:
+    image: postgres:15
+    container_name: fire_safety_db
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
+    networks:
+      - fire-safety-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. Backend Servisi (Flask API)
   backend:
     build: .
     container_name: fire_safety_backend
+    restart: always
     ports:
       - "5000:5000"
-    restart: always
     networks:
       - fire-safety-network
+    depends_on:
+      - db
     environment:
+      # Veritabanı bağlantı bilgilerini buraya geçiyoruz
+      - DATABASE_URL=postgresql://myuser:mypassword@db:5432/mydatabase
+      - JWT_SECRET_KEY=yangin-sistemi-super-secret-key-2024
       - FLASK_ENV=production
 
-  # Frontend Service (Nginx)
+  # 3. Frontend Servisi (Nginx)
   frontend:
     build: ./frontend
     container_name: fire_safety_frontend
@@ -28,3 +49,6 @@ services:
 networks:
   fire-safety-network:
     driver: bridge
+
+volumes:
+  postgres_data:
