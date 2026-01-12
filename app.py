@@ -131,6 +131,15 @@ def durumu_al():
         "SprinklerSistemi": {"durum": sprinkler_sistemi.durum}
     }), 200
 
+@app.route('/swagger.yaml', methods=['GET'])
+def swagger_yaml():
+    """Swagger/OpenAPI dokümantasyonunu döner"""
+    try:
+        with open('swagger.yaml', 'r', encoding='utf-8') as f:
+            return f.read(), 200, {'Content-Type': 'text/yaml'}
+    except FileNotFoundError:
+        return jsonify({"mesaj": "Swagger dokümantasyonu bulunamadı"}), 404
+
 # --- BAŞLATMA VE DB OLUŞTURMA ---
 if __name__ == '__main__':
     with app.app_context():

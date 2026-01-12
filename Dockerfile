@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Uygulama kodunu kopyala
 COPY app.py .
+COPY swagger.yaml .
 
 # Uygulamanın çalışacağı portu belirle
 EXPOSE 5000

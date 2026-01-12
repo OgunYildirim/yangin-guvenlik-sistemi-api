@@ -38,6 +38,13 @@ docker-compose down
 **Servis Adresleri:**
 - **Frontend:** http://localhost:3000
 - **Backend API:** http://localhost:5000
+- **Swagger UI:** http://localhost:5000/swagger.yaml (OpenAPI dokümantasyonu)
+- **PostgreSQL:** localhost:5432 (myuser/mypassword)
+
+**📚 Dokümantasyon:**
+- **API Dokümantasyonu:** `swagger.yaml` - OpenAPI 3.0 formatında
+- **Sistem Diyagramları:** `MERMAID.md` - MermaidJS ile görselleştirilmiş akışlar
+- **Test Kılavuzu:** `TEST_GUIDE.md`
 
 ### Manuel Kurulum
 

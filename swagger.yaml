@@ -1,0 +1,280 @@
+openapi: 3.0.3
+info:
+  title: Yangın Güvenlik Sistemi API
+  description: |
+    JWT tabanlı authentication içeren yangın güvenlik kontrol paneli REST API.
+    
+    ## Authentication
+    Bu API JWT (JSON Web Token) tabanlı authentication kullanır.
+    
+    ### Token Alma
+    1. `/api/login` endpoint'ine kullanıcı adı ve şifre gönderin
+    2. Dönen `access_token`'ı alın
+    3. Protected endpoint'lere erişirken `Authorization: Bearer <token>` header'ını kullanın
+    
+    ### Demo Kullanıcılar
+    - **admin** / admin123
+    - **operator** / operator123
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@yanginsistemi.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5000
+    description: Development server
+  - url: http://localhost:5000/api
+    description: API base path
+
+tags:
+  - name: Authentication
+    description: Kullanıcı girişi ve token yönetimi
+  - name: Fire Protocol
+    description: Yangın protokolü yönetimi
+  - name: System
+    description: Sistem durumu ve kontrol
+
+paths:
+  /api/login:
+    post:
+      tags:
+        - Authentication
+      summary: Kullanıcı girişi
+      description: Kullanıcı adı ve şifre ile giriş yaparak JWT token alır
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: admin
+                  description: Kullanıcı adı
+                password:
+                  type: string
+                  format: password
+                  example: admin123
+                  description: Kullanıcı şifresi
+      responses:
+        '200':
+          description: Giriş başarılı
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mesaj:
+                    type: string
+                    example: Giriş başarılı
+                  access_token:
+                    type: string
+                    example: eyJ0eXAiOiJKV1QiLCJhbGc...
+                  kullanici:
+                    type: string
+                    example: admin
+        '400':
+          description: Geçersiz istek
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Geçersiz kullanıcı adı veya şifre
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/yangin_uyarisi:
+    post:
+      tags:
+        - Fire Protocol
+      summary: Yangın protokolü başlat
+      description: Yangın uyarısı alındığında protokolü başlatır (JWT token gerekli)
+      operationId: startFireProtocol
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kaynak:
+                  type: string
+                  example: Ana_Giris_Sensörü
+                  description: Yangın kaynağı sensör adı
+      responses:
+        '200':
+          description: Protokol başarıyla başlatıldı
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
+                  protokol_baslatildi:
+                    type: boolean
+                    example: true
+                  kaynak_sensör:
+                    type: string
+                    example: Ana_Giris_Sensörü
+                  islem_yapan_kullanici:
+                    type: string
+                    example: admin
+                  protokol_akisi:
+                    type: object
+                    properties:
+                      alarm:
+                        type: object
+                        properties:
+                          mesaj:
+                            type: string
+                          durum:
+                            type: string
+                      sprinkler_komut:
+                        type: object
+                        properties:
+                          mesaj:
+                            type: string
+                          durum:
+                            type: string
+                      kontrol_paneli_durumu:
+                        type: string
+        '401':
+          description: Token geçersiz veya eksik
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Sunucu hatası
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/durum:
+    get:
+      tags:
+        - System
+      summary: Sistem durumunu sorgula
+      description: Alarm ve sprinkler sistemlerinin mevcut durumunu döner (Token gerektirmez)
+      operationId: getSystemStatus
+      responses:
+        '200':
+          description: Sistem durumu başarıyla alındı
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  AlarmSistemi:
+                    type: object
+                    properties:
+                      durum:
+                        type: string
+                        enum: [Hazır, Calisiyor]
+                        example: Hazır
+                  SprinklerSistemi:
+                    type: object
+                    properties:
+                      durum:
+                        type: string
+                        enum: [Hazır, Calisiyor]
+                        example: Hazır
+
+  /api/sifirla:
+    post:
+      tags:
+        - System
+      summary: Sistemi sıfırla
+      description: Tüm yangın sistemlerini sıfırlar (Token gerektirmez)
+      operationId: resetSystem
+      responses:
+        '200':
+          description: Sistem başarıyla sıfırlandı
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mesaj:
+                    type: string
+                    example: Tüm yangın sistemleri sıfırlandı.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token kullanarak authentication.
+        
+        Token almak için önce `/api/login` endpoint'ine istek gönderin.
+        Dönen `access_token`'ı bu formatta kullanın: `Bearer <token>`
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        mesaj:
+          type: string
+          description: Hata mesajı
+        status:
+          type: string
+          description: Hata durumu
+      example:
+        mesaj: Geçersiz kullanıcı adı veya şifre
+        status: Hata
+
+  examples:
+    LoginRequest:
+      value:
+        username: admin
+        password: admin123
+    
+    LoginResponse:
+      value:
+        mesaj: Giriş başarılı
+        access_token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+        kullanici: admin
+    
+    FireProtocolRequest:
+      value:
+        kaynak: Ana_Giris_Sensörü
+    
+    FireProtocolResponse:
+      value:
+        status: OK
+        protokol_baslatildi: true
+        kaynak_sensör: Ana_Giris_Sensörü
+        islem_yapan_kullanici: admin
+        protokol_akisi:
+          alarm:
+            mesaj: Alarm başarıyla çalıştırıldı
+            durum: Calisiyor
+          sprinkler_komut:
+            mesaj: Su akışı başladı
+            durum: Calisiyor
+          kontrol_paneli_durumu: İşlem tamamlandı: Alarm ve Sprinkler devreye alındı.
+    
+    SystemStatusResponse:
+      value:
+        AlarmSistemi:
+          durum: Hazır
+        SprinklerSistemi:
+          durum: Hazır
